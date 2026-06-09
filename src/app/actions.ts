@@ -1,6 +1,7 @@
 "use server";
 
 import { createServiceRoleClient } from "@/lib/supabase";
+import { sendOnboardingAlert } from "@/lib/email";
 import {
   ALL_FIELDS,
   HONEYPOT_FIELD,
@@ -81,7 +82,22 @@ export async function submitOnboarding(raw: FormData): Promise<SubmitResult> {
     console.error("[onboarding] DB insert threw:", err);
   }
 
-  // 5. Best-effort webhook POST. Never blocks or fails the submission.
+  // 5. Best-effort email alert via Resend. The DB save above is the priority
+  //    and has already completed; this is a side effect that must NEVER block
+  //    or fail the submission. sendOnboardingAlert swallows its own errors, but
+  //    we wrap defensively too.
+  try {
+    await sendOnboardingAlert({
+      businessName,
+      contactName,
+      submissionDate,
+      responses,
+    });
+  } catch (err) {
+    console.error("[onboarding] Email alert threw:", err);
+  }
+
+  // 6. Best-effort webhook POST. Never blocks or fails the submission.
   //    Runs regardless of DB outcome so notifications still fire.
   await postWebhook({
     business_name: businessName,
