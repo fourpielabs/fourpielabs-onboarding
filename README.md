@@ -41,11 +41,17 @@ deployment.
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public (browser) | Anon key — respects Row Level Security |
 | `SUPABASE_SERVICE_ROLE_KEY` | **Server-only** | Bypasses RLS — never exposed to the client |
 | `ONBOARDING_WEBHOOK_URL` | **Server-only**, optional | Webhook the submit action POSTs each submission to. If unset, the step is skipped gracefully. |
+| `RESEND_API_KEY` | **Server-only**, optional | Resend API key for new-submission email alerts. If unset, the email step is skipped gracefully. |
+| `LEAD_ALERT_TO` | **Server-only**, optional | Comma-separated recipient list for the email alert (e.g. `team@fourpielabs.com,owner@fourpielabs.com`). |
 
 The two `NEXT_PUBLIC_*` values power the anon client (`supabase`), safe for
-browser and server use. `SUPABASE_SERVICE_ROLE_KEY` and `ONBOARDING_WEBHOOK_URL`
-are read only inside the server-side submit action (`src/app/actions.ts`) and
-the `createServiceRoleClient()` factory — they never reach the browser.
+browser and server use. `SUPABASE_SERVICE_ROLE_KEY`, `ONBOARDING_WEBHOOK_URL`,
+`RESEND_API_KEY`, and `LEAD_ALERT_TO` are read only inside the server-side submit
+action (`src/app/actions.ts`) / its helpers — they never reach the browser.
+
+> **Resend domain:** the email alert sends `from: 4Pie Labs <noreply@mail.fourpielabs.com>`.
+> That `mail.fourpielabs.com` domain must be **verified in the Resend account**
+> or sends will be rejected. Replies go to `team@fourpielabs.com`.
 
 ## How the form submits
 
@@ -57,8 +63,15 @@ secrets stay server-side. On submit the action:
 2. Inserts a row into `client_onboarding` using the **service-role** client
    (`business_name` / `contact_name` / `submission_date` columns + all answers
    in the `responses` jsonb keyed by stable field ids). This is the priority.
-3. Best-effort POSTs the full payload to `ONBOARDING_WEBHOOK_URL` (skipped if
-   unset). The two steps are independent — one failing doesn't block the other.
+3. Best-effort sends a branded email alert via Resend
+   ([src/lib/email.ts](src/lib/email.ts)), organizing the answers by the four
+   form sections.
+4. Best-effort POSTs the full payload to `ONBOARDING_WEBHOOK_URL` (skipped if
+   unset).
+
+Steps 3 and 4 are independent side effects — a Resend failure, an unset/failing
+webhook, or either being unconfigured never blocks the submission or the user's
+success response. Only the DB insert determines success.
 
 In-progress answers are held in `sessionStorage` for 30 minutes (restored on
 reload, discarded if older, cleared on successful submit). The route is
