@@ -1,26 +1,50 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* ──────────────────────────────────────────────────────────────
+   4Pie Labs brand design tokens — dark + amber.
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+   Defined as Tailwind v4 `@theme` tokens, so each one is exposed
+   both as a CSS custom property (e.g. `var(--color-accent)`) AND as
+   a utility class (e.g. `bg-accent`, `text-foreground`, `border-border`).
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+   Exact values are placeholders to be refined later — the token
+   STRUCTURE is what matters now, so the onboarding form stays
+   visually consistent with the main 4Pie Labs site.
+   ────────────────────────────────────────────────────────────── */
+@theme {
+  /* Surfaces — near-black background with subtly raised panels */
+  --color-background: #0a0a0a; /* page background */
+  --color-surface: #141414; /* cards / raised panels */
+  --color-surface-muted: #1c1c1c; /* inputs, subtle fills */
+  --color-border: #2a2a2a; /* hairline borders */
+
+  /* Text — light on dark */
+  --color-foreground: #f5f5f5; /* primary text */
+  --color-foreground-muted: #a3a3a3; /* secondary / helper text */
+
+  /* Amber accent */
+  --color-accent: #fbbf24; /* primary amber (amber-400) */
+  --color-accent-strong: #f59e0b; /* hover / emphasis (amber-500) */
+  --color-accent-foreground: #0a0a0a; /* text/icons on an amber fill */
+
+  /* Typography — clean modern sans-serif */
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  /* Shared brand radius */
+  --radius-brand: 0.75rem;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  /* Subtle warm glow in the top-right, echoing the brand collateral. */
+  background-image: radial-gradient(
+    60rem 40rem at 100% -10%,
+    color-mix(in srgb, var(--color-accent) 8%, transparent),
+    transparent 70%
+  );
+  background-attachment: fixed;
 }
